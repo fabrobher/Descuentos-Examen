@@ -40,6 +40,10 @@ module.exports = {
       phone: {
         type: Sequelize.STRING
       },
+      porcentaje: {
+        type: Sequelize.INTEGER,
+        defaultValue: 0
+      },
       logo: {
         type: Sequelize.STRING
       },

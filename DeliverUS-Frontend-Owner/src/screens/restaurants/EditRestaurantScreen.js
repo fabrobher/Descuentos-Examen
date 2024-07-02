@@ -16,13 +16,19 @@ import TextError from '../../components/TextError'
 import { prepareEntityImages } from '../../api/helpers/FileUploadHelper'
 import { buildInitialValues } from '../Helper'
 
+// Solution
+import ConfirmationModal from '../../components/ConfirmationModal'
+import TextSemiBold from '../../components/TextSemibold'
+
 export default function EditRestaurantScreen ({ navigation, route }) {
   const [open, setOpen] = useState(false)
   const [restaurantCategories, setRestaurantCategories] = useState([])
   const [backendErrors, setBackendErrors] = useState()
   const [restaurant, setRestaurant] = useState({})
 
-  const [initialRestaurantValues, setInitialRestaurantValues] = useState({ name: null, description: null, address: null, postalCode: null, url: null, shippingCosts: null, email: null, phone: null, restaurantCategoryId: null, logo: null, heroImage: null })
+  const [porcentajeToBeShow, setPorcentajeToBeShow] = useState(false)
+
+  const [initialRestaurantValues, setInitialRestaurantValues] = useState({ name: null, description: null, address: null, postalCode: null, url: null, shippingCosts: null, email: null, phone: null, restaurantCategoryId: null, logo: null, heroImage: null, porcentaje: 0 })
   const validationSchema = yup.object().shape({
     name: yup
       .string()
@@ -44,6 +50,10 @@ export default function EditRestaurantScreen ({ navigation, route }) {
       .number()
       .positive('Please provide a valid shipping cost value')
       .required('Shipping costs value is required'),
+    porcentaje: yup
+      .number()
+      .max(5)
+      .min(-5),
     email: yup
       .string()
       .nullable()
@@ -129,6 +139,14 @@ export default function EditRestaurantScreen ({ navigation, route }) {
 
   const updateRestaurant = async (values) => {
     setBackendErrors([])
+
+    // Solution
+    if (values.porcentaje !== 0 && !porcentajeToBeShow) {
+      setPorcentajeToBeShow(true)
+    } else {
+      setPorcentajeToBeShow(false)
+    }
+
     try {
       const updatedRestaurant = await update(restaurant.id, values)
       showMessage({
@@ -178,6 +196,45 @@ export default function EditRestaurantScreen ({ navigation, route }) {
                 name='shippingCosts'
                 label='Shipping costs:'
               />
+
+              <View style= {{
+                flexDirection: 'row',
+                justifyContent: 'center',
+                alignItems: 'center',
+                marginTop: 20,
+                marginBottom: 10
+              }}>
+                <Pressable onPress={() => {
+                  const newPorcentaje = values.porcentaje + 0.5
+                  if (newPorcentaje < 5) {
+                    setFieldValue('porcentaje', newPorcentaje)
+                  }
+                }}>
+                  <MaterialCommunityIcons
+                    name={'arrow-up-circle'}
+                    color={GlobalStyles.brandSecondaryTap}
+                    size={40}
+                  />
+                </Pressable>
+
+                <TextSemiBold> Porcentaje actual:
+                <TextSemiBold textStyle={{ color: GlobalStyles.brandPrimary }}>
+                  {values.porcentaje.toFixed(1)}% </TextSemiBold> </TextSemiBold>
+
+                  <Pressable onPress={() => {
+                    const newPorcentaje = values.porcentaje - 0.5
+                    if (newPorcentaje > -5) {
+                      setFieldValue('porcentaje', newPorcentaje)
+                    }
+                  }}>
+                  <MaterialCommunityIcons
+                    name={'arrow-down-circle'}
+                    color={GlobalStyles.brandSecondaryTap}
+                    size={40}
+                  />
+                </Pressable>
+              </View>
+
               <InputItem
                 name='email'
                 label='Email:'
@@ -252,6 +309,13 @@ export default function EditRestaurantScreen ({ navigation, route }) {
               </Pressable>
             </View>
           </View>
+
+          <ConfirmationModal
+            isVisible={porcentajeToBeShow}
+            onCancel={() => setPorcentajeToBeShow(false)}
+            onConfirm={() => updateRestaurant(values)}>
+          </ConfirmationModal>
+
         </ScrollView>
       )}
     </Formik>
